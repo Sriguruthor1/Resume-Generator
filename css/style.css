@@ -417,7 +417,24 @@ textarea.form-control { resize: vertical; }
 .resume-preview-wrapper {
     position: sticky;
     top: 20px;
+    max-height: 90vh; /* Limit height */
+    overflow-y: auto; /* Add scrollbar when content overflows */
 }
+.resume-preview-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+.resume-preview-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+.resume-preview-wrapper::-webkit-scrollbar-thumb {
+  background: var(--gray);
+  border-radius: 4px;
+}
+.resume-preview-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
 .resume-preview {
     background: white; /* Default background for all templates */
     border-radius: var(--border-radius);
@@ -428,7 +445,7 @@ textarea.form-control { resize: vertical; }
     height: auto;
     color: var(--dark);
     transition: var(--transition);
-    overflow: hidden;
+    /* overflow: hidden; <-- REMOVED this to fix PDF download */
 }
 .preview-highlight {
     background-color: rgba(76, 201, 240, 0.3);
