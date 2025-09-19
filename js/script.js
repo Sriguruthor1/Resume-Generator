@@ -1,11 +1,62 @@
 // --- APP INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Three.js background
+    initThreeJS();
+
     // Only run the builder script on the builder page
     if (document.getElementById('resume-form')) {
         console.log("Builder page detected. Initializing script...");
         new ResumeBuilder();
     }
 });
+
+// Initialize Three.js background
+function initThreeJS() {
+    // Check if the container exists to avoid errors on pages without it
+    if (!document.getElementById('three-bg')) return;
+    
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('three-bg').appendChild(renderer.domElement);
+
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particlesCnt = 5000;
+    const posArray = new Float32Array(particlesCnt * 3);
+    for(let i = 0; i < particlesCnt * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 20;
+    }
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+    const particlesMaterial = new THREE.PointsMaterial({ size: 0.02, color: 0x4cc9f0, transparent: true, opacity: 0.8 });
+    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particlesMesh);
+    camera.position.z = 5;
+
+    let mouseX = 0;
+    let mouseY = 0;
+    document.addEventListener('mousemove', (event) => {
+        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        particlesMesh.rotation.x += 0.0005;
+        particlesMesh.rotation.y += 0.0005;
+        particlesMesh.rotation.y += mouseX * 0.0005;
+        particlesMesh.rotation.x += mouseY * 0.0005;
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+}
 
 class ResumeBuilder {
     constructor() {
@@ -51,6 +102,9 @@ class ResumeBuilder {
             clearTimeout(this.debounceTimer);
             this.debounceTimer = setTimeout(() => this.saveDataToLocalStorage(), 300);
         });
+        
+        // Enter key navigation
+        this.elements.form.addEventListener('keydown', this.handleEnterNavigation.bind(this));
 
         // Focus listeners for highlighting the preview
         this.elements.form.addEventListener('focusin', this.handleFocusIn.bind(this));
@@ -89,6 +143,22 @@ class ResumeBuilder {
                 this.saveDataToLocalStorage(); // Save selected template
             }
         });
+    }
+    
+    // --- KEYBOARD NAVIGATION ---
+    handleEnterNavigation(event) {
+        if (event.key === 'Enter') {
+            const target = event.target;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+                event.preventDefault();
+                const focusable = Array.from(this.elements.form.querySelectorAll('input:not([type="hidden"]), textarea'));
+                const index = focusable.indexOf(target);
+                
+                if (index > -1 && (index + 1) < focusable.length) {
+                    focusable[index + 1].focus();
+                }
+            }
+        }
     }
 
     // --- DATA MANAGEMENT (LOCAL STORAGE & JSON) ---
