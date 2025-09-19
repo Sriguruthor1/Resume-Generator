@@ -404,33 +404,60 @@ class ResumeBuilder {
     // --- DOWNLOADS ---
     downloadPDF() {
         const node = this.elements.resumePreview;
+        const wrapper = document.querySelector('.resume-preview-wrapper');
         const button = this.elements.downloadPdfBtn;
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
         button.disabled = true;
-
+    
+        // Temporarily modify styles for full capture
+        const originalWrapperMaxHeight = wrapper.style.maxHeight;
+        const originalWrapperOverflow = wrapper.style.overflow;
+    
+        wrapper.style.maxHeight = 'none';
+        wrapper.style.overflow = 'visible';
+    
         domtoimage.toPng(node, {
             quality: 1.0,
             bgcolor: '#ffffff',
-            width: node.scrollWidth,
+            width: node.clientWidth,
             height: node.scrollHeight
         }).then(dataUrl => {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
             const img = new Image();
             img.src = dataUrl;
             img.onload = () => {
                 const imgWidth = img.width;
                 const imgHeight = img.height;
-                const ratio = imgWidth / imgHeight;
-                const finalHeight = pdfWidth / ratio;
-                pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, finalHeight);
+                const ratio = imgHeight / imgWidth;
+                const imgTotalHeight = pdfWidth * ratio;
+    
+                let heightLeft = imgTotalHeight;
+                let position = 0;
+    
+                // Add the first page
+                pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, imgTotalHeight);
+                heightLeft -= pdfHeight;
+    
+                // Add new pages if the image is taller than the page
+                while (heightLeft > 0) {
+                    position -= pdfHeight;
+                    pdf.addPage();
+                    pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, imgTotalHeight);
+                    heightLeft -= pdfHeight;
+                }
                 pdf.save('resume.pdf');
-            }
+            };
         }).catch(error => {
             console.error('PDF generation failed:', error);
             alert('Sorry, there was an error creating the PDF. Please try again.');
         }).finally(() => {
+            // Revert styles back to original
+            wrapper.style.maxHeight = originalWrapperMaxHeight;
+            wrapper.style.overflow = originalWrapperOverflow;
+    
             button.innerHTML = '<i class="fas fa-file-pdf"></i> Download PDF';
             button.disabled = false;
         });
