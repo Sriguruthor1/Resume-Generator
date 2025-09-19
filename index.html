@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTS - Build Your Resume</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Loading overlay styles */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            flex-direction: column;
+            text-align: center;
+        }
+        #loading-overlay .fa-spinner {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p id="loading-text">Parsing your resume...</p>
+    </div>
+
+    <div class="container landing-container">
+        <header class="landing-header">
+            <h1><i class="fas fa-rocket"></i> Welcome to VTS</h1>
+            <p>Your journey to a standout professional resume starts here.</p>
+        </header>
+
+        <div class="landing-features">
+            <div class="feature-card">
+                <h3><i class="fas fa-pen-to-square"></i> Create New Resume</h3>
+                <p>Start from scratch and build a professional resume in minutes.</p>
+                <a href="builder.html?new=true" class="btn btn-secondary">Start Fresh</a>
+            </div>
+            <div class="feature-card">
+                <h3><i class="fas fa-file-arrow-up"></i> Upload PDF Resume</h3>
+                <p>Upload a PDF file to automatically fill in the details and start editing.</p>
+                <label for="upload-pdf" class="btn btn-primary">Upload PDF</label>
+                <input type="file" id="upload-pdf" accept=".pdf" style="display: none;">
+            </div>
+            <div class="feature-card">
+                <h3><i class="fas fa-file-word"></i> Upload DOCX Resume</h3>
+                <p>Upload a DOCX file to automatically fill in the details and start editing.</p>
+                <label for="upload-doc" class="btn btn-primary">Upload DOCX</label>
+                <input type="file" id="upload-doc" accept=".docx" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 VTS. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.18/mammoth.browser.min.js"></script>
+
+    <script>
+        // Set worker source for pdf.js from CDN
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js`;
+
+        const pdfInput = document.getElementById('upload-pdf');
+        const docxInput = document.getElementById('upload-doc');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+
+        pdfInput.addEventListener('change', handleFileUpload);
+        docxInput.addEventListener('change', handleFileUpload);
+
+        function showLoading(text) {
+            loadingText.textContent = text;
+            loadingOverlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showLoading('Parsing your resume...');
+
+            const fileType = file.name.split('.').pop().toLowerCase();
+
+            if (fileType === 'pdf') {
+                parsePdf(file);
+            } else if (fileType === 'docx') {
+                parseDocx(file);
+            } else {
+                alert('Unsupported file type. Please upload a PDF or DOCX file.');
+                hideLoading();
+            }
+            event.target.value = ''; // Reset input to allow re-uploading the same file
+        }
+
+        function parsePdf(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const typedarray = new Uint8Array(e.target.result);
+                pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                    const promises = [];
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        promises.push(pdf.getPage(i).then(page => page.getTextContent()));
+                    }
+                    return Promise.all(promises);
+                }).then(textContents => {
+                    let fullText = '';
+                    textContents.forEach(content => {
+                        content.items.forEach(item => {
+                            fullText += item.str + ' ';
+                        });
+                        fullText += '\n'; // Newline per page
+                    });
+                    processExtractedText(fullText);
+                }).catch(err => {
+                    console.error('Error parsing PDF:', err);
+                    alert('Could not automatically read the PDF file. It might be an image-based PDF or have a complex format.');
+                    hideLoading();
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parseDocx(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                mammoth.extractRawText({ arrayBuffer: e.target.result })
+                    .then(result => {
+                        processExtractedText(result.value);
+                    })
+                    .catch(err => {
+                        console.error('Error parsing DOCX:', err);
+                        alert('Could not read the DOCX file.');
+                        hideLoading();
+                    });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processExtractedText(text) {
+            // NOTE: This is a best-effort parser. Its accuracy depends heavily on the resume format.
+            const resumeData = {
+                fullName: '', jobTitle: '', email: '', phone: '', location: '',
+                linkedin: '', website: '', summary: '', skills: '',
+                experience: [], education: []
+            };
+
+            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+            // Extract contact info (more robust)
+            resumeData.email = text.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || '';
+            resumeData.phone = text.match(/(\(\d{3}\)\s?|\d{3}[-.\s]?)\d{3}[-.\s]?\d{4}/)?.[0] || '';
+            const linkedinMatch = text.match(/(linkedin\.com\/in\/[\w-]+)/);
+            if(linkedinMatch) resumeData.linkedin = 'https://' + linkedinMatch[0];
+            
+            // Simple approach for Name and Title (often at the top)
+            if (lines.length > 0) resumeData.fullName = lines[0];
+            if (lines.length > 1 && lines[1].length < 50) resumeData.jobTitle = lines[1];
+
+            // Section-based content extraction
+            const textLower = text.toLowerCase();
+            const sectionKeywords = ['summary', 'profile', 'experience', 'employment', 'education', 'skills'];
+            const sectionIndices = sectionKeywords.map(key => ({ key, index: textLower.indexOf(key) })).filter(item => item.index !== -1).sort((a, b) => a.index - b.index);
+
+            for (let i = 0; i < sectionIndices.length; i++) {
+                const currentSection = sectionIndices[i];
+                const nextSection = sectionIndices[i + 1];
+                const start = currentSection.index + currentSection.key.length;
+                const end = nextSection ? nextSection.index : text.length;
+                let content = text.substring(start, end).trim();
+                
+                // Clean up title from content
+                content = content.replace(/^[a-zA-Z\s]+/, '').trim(); 
+
+                if (currentSection.key === 'summary' || currentSection.key === 'profile') {
+                    resumeData.summary = content;
+                } else if (currentSection.key === 'skills') {
+                    resumeData.skills = content.replace(/\s+/g, ', ');
+                } else if (currentSection.key === 'experience' || currentSection.key === 'employment') {
+                    // This is complex to split perfectly, so we add it as one entry for the user to fix.
+                    resumeData.experience.push({ title: 'Job Title (please edit)', company: 'Company (please edit)', dates: '', description: content });
+                } else if (currentSection.key === 'education') {
+                    resumeData.education.push({ degree: 'Degree (please edit)', school: 'School (please edit)', dates: '', description: content });
+                }
+            }
+
+            // Save to local storage and redirect
+            localStorage.setItem('resumeData', JSON.stringify(resumeData));
+            window.location.href = 'builder.html';
+        }
+    </script>
+</body>
+</html>

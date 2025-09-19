@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTS - Step by Step Resume Builder</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-graduation-cap"></i> VTS</h1>
+            <p>Your progress is saved automatically. Use the navigation below to build your resume.</p>
+        </header>
+
+        <div class="steps-container">
+            <div class="step active" data-step="1">1</div>
+            <div class="step" data-step="2">2</div>
+            <div class="step" data-step="3">3</div>
+            <div class="step" data-step="4">4</div>
+            <div class="step" data-step="5">5</div>
+        </div>
+        <div class="step-labels-container">
+            <span>Personal Info</span>
+            <span>Experience</span>
+            <span>Education</span>
+            <span>Skills</span>
+            <span>Finalize</span>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <div class="app-container">
+            <div class="form-section" id="form-section">
+                <form id="resume-form">
+                    <div class="step-content active" id="step-1">
+                        <h2 class="section-title"><i class="fas fa-user"></i> Personal Information</h2>
+                        <div class="form-group"><label for="fullName">Full Name</label><input type="text" id="fullName" class="form-control" placeholder="John Doe" data-preview-target=".resume-name" name="fullName"></div>
+                        <div class="form-group"><label for="jobTitle">Desired Job Title</label><input type="text" id="jobTitle" class="form-control" placeholder="Software Engineer" data-preview-target=".resume-title" name="jobTitle"></div>
+                        <div class="form-group"><label for="email">Email</label><input type="email" id="email" class="form-control" placeholder="john.doe@email.com" data-preview-target="#contact-email" name="email"></div>
+                        <div class="form-group"><label for="phone">Phone</label><input type="tel" id="phone" class="form-control" placeholder="(123) 456-7890" data-preview-target="#contact-phone" name="phone"></div>
+                        <div class="form-group"><label for="location">Location</label><input type="text" id="location" class="form-control" placeholder="City, State" data-preview-target="#contact-location" name="location"></div>
+                        <div class="form-group"><label for="linkedin">LinkedIn</label><input type="url" id="linkedin" class="form-control" placeholder="https://linkedin.com/in/johndoe" data-preview-target="#contact-linkedin" name="linkedin"></div>
+                        <div class="form-group"><label for="website">Portfolio/Website</label><input type="url" id="website" class="form-control" placeholder="https://johndoe.com" data-preview-target="#contact-website" name="website"></div>
+                    </div>
+
+                    <div class="step-content" id="step-2"><h2 class="section-title"><i class="fas fa-briefcase"></i> Work Experience</h2><div id="experience-container" data-preview-target="#experience-section"></div><button type="button" id="add-experience" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Experience</button></div>
+                    <div class="step-content" id="step-3"><h2 class="section-title"><i class="fas fa-graduation-cap"></i> Education</h2><div id="education-container" data-preview-target="#education-section"></div><button type="button" id="add-education" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Education</button></div>
+
+                    <div class="step-content" id="step-4">
+                        <h2 class="section-title"><i class="fas fa-tools"></i> Summary & Skills</h2>
+                        <div class="form-group"><label for="summary">Professional Summary</label><textarea id="summary" class="form-control" rows="5" placeholder="A brief summary..." data-preview-target="#summary-section" name="summary"></textarea></div>
+                        <div class="form-group"><label for="skills">Skills (comma separated)</label><textarea id="skills" class="form-control" rows="3" placeholder="JavaScript, React, Python" data-preview-target="#skills-section" name="skills"></textarea></div>
+                    </div>
+
+                    <div class="step-content" id="step-5">
+                        <h2 class="section-title"><i class="fas fa-palette"></i> Choose Template & Download</h2>
+                        <div class="template-previews">
+                           </div>
+                        <h3 class="section-subtitle">Download Your Resume</h3>
+                        <div class="download-options">
+                            <button type="button" id="download-pdf" class="btn btn-success download-btn"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                            <button type="button" id="download-doc" class="btn btn-primary download-btn"><i class="fas fa-file-word"></i> Download DOC</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="navigation-buttons">
+                    <button type="button" id="prev-btn" class="btn btn-secondary" style="display: none;"><i class="fas fa-arrow-left"></i> Previous</button>
+                    <button type="button" id="next-btn" class="btn btn-primary">Next <i class="fas fa-arrow-right"></i></button>
+                </div>
+                
+            </div>
+
+            <div class="preview-section">
+                <h2 class="section-title"><i class="fas fa-eye"></i> Live Preview</h2>
+                <div class="resume-preview-wrapper">
+                    <div class="resume-preview template-1" id="resume-preview"></div>
+                </div>
+            </div>
+        </div>
+
+        <footer><p>© 2025 VTS. All rights reserved.</p></footer>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
